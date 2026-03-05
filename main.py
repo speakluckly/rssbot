@@ -42,6 +42,32 @@ class RssSubscriber(Star):
         await asyncio.sleep(2)  # 等待2秒
         logger.info("RSS 订阅插件后台任务已启动，检查间隔 {} 秒".format(self.check_interval))
         self._task = asyncio.create_task(self._check_updates())
+    async def _delayed_start(self):
+        await asyncio.sleep(2)
+        logger.info("RSS 订阅插件后台任务已启动，检查间隔 {} 秒".format(self.check_interval))
+        self._task = asyncio.create_task(self._check_updates())
+        # 发送启动测试通知（可选，可注释掉）
+        await self._send_test_notifications()
+async def _send_test_notifications(self):
+    """插件启动时向所有已订阅用户发送测试消息，验证推送功能"""
+    try:
+        data = await self.get_kv_data("subscriptions", {})
+        user_subs = data.get("user_subs", {})
+        if not user_subs:
+            logger.info("无订阅用户，跳过启动测试推送")
+            return
+
+        test_msg = "🧪 这是来自 RSS 订阅插件的启动测试消息。如果你看到这条消息，说明推送功能正常。"
+        for uid, info in user_subs.items():
+            origin = info.get("origin")
+            if origin:
+                try:
+                    await self.context.send_message(origin, [Plain(test_msg)])
+                    logger.info(f"已向用户 {uid} 发送启动测试消息")
+                except Exception as e:
+                    logger.error(f"向用户 {uid} 发送测试消息失败: {e}")
+    except Exception as e:
+        logger.error(f"发送启动测试通知时出错: {e}")
 
     # 以下是你原有的其他方法，保持原样（_fetch_rss, _get_latest_entry, _check_updates, 指令等）
     async def _fetch_rss(self, url: str):
@@ -131,12 +157,6 @@ class RssSubscriber(Star):
 
     async def _start_background_task(self):
         self._task = asyncio.create_task(self._check_updates())
-
-    @filter.on_astrbot_loaded()
-    async def on_loaded(self):
-        await self._start_background_task()
-        logger.info("RSS 订阅插件已启动，后台检查间隔 {} 秒".format(self.check_interval))
-
     async def terminate(self):
         if self._task:
             self._task.cancel()
