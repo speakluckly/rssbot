@@ -1,4 +1,10 @@
 import asyncio
+import sys
+import os
+
+persistent_packages = "/AstrBot/data/python_packages"
+if os.path.exists(persistent_packages) and persistent_packages not in sys.path:
+    sys.path.insert(0, persistent_packages)
 import feedparser
 import aiohttp
 from datetime import datetime, timezone
