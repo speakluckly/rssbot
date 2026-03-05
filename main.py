@@ -20,7 +20,7 @@ from astrbot.api import logger
 #   }
 # }
 
-@register("rss_subscriber", "你的名字", "一个简单的 RSS 订阅推送插件")
+@register("rss_subscriber", "你的名字", "一个简单的 RSS 订阅推送插件", "1.0.0")
 class RssSubscriber(Star):
     def __init__(self, context: Context):
         super().__init__(context)
