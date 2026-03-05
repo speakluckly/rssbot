@@ -3,8 +3,10 @@ import sys
 import os
 
 persistent_packages = "/AstrBot/data/python_packages"
-if os.path.exists(persistent_packages) and persistent_packages not in sys.path:@filter
+if os.path.exists(persistent_packages) and persistent_packages not in sys.path:
+    @filter
     sys.path.insert(0, persistent_packages)
+    
 import feedparser
 import aiohttp
 from datetime import datetime, timezone
@@ -186,7 +188,7 @@ class RssSubscriber(Star):
         yield event.plain_result(f"✅ 成功订阅 RSS 源：{url}\n最新条目：{new_title}")
 
     @rss.command("remove")
-    @filter.private_message()
+    @filter.event_message_type(filter.EventMessageType.PRIVATE_MESSAGE)
     async def remove_sub(self, event: AstrMessageEvent, url: str):
         """取消订阅 RSS 源"""
         uid = str(event.get_sender_id())
@@ -208,7 +210,7 @@ class RssSubscriber(Star):
         yield event.plain_result("❌ 未找到该订阅 URL。")
 
     @rss.command("list")
-    @filter.private_message()
+    @filter.event_message_type(filter.EventMessageType.PRIVATE_MESSAGE)
     async def list_subs(self, event: AstrMessageEvent):
         """列出当前订阅的 RSS 源"""
         uid = str(event.get_sender_id())
@@ -225,7 +227,7 @@ class RssSubscriber(Star):
         yield event.plain_result(msg)
 
     @rss.command("check")
-    @filter.private_message()
+    @filter.event_message_type(filter.EventMessageType.PRIVATE_MESSAGE)
     async def manual_check(self, event: AstrMessageEvent):
         """手动触发一次更新检查"""
         uid = str(event.get_sender_id())
