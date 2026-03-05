@@ -71,7 +71,7 @@ class RssSubscriber(Star):
             try:
                 await asyncio.sleep(self.check_interval)
                 logger.debug("开始检查 RSS 更新...")
-                data = await self.get_kv_data("subscriptions") or {}
+               data = await self.get_kv_data("subscriptions", {})
                 user_subs = data.get("user_subs", {})
                 if not user_subs:
                     continue
@@ -154,7 +154,7 @@ class RssSubscriber(Star):
             yield event.plain_result("❌ RSS 源无任何条目，无法订阅。")
             return
 
-        data = await self.get_kv_data("subscriptions") or {}
+       data = await self.get_kv_data("subscriptions", {})
         user_subs = data.setdefault("user_subs", {})
 
         # 使用 QQ 号作为用户标识
@@ -191,7 +191,7 @@ class RssSubscriber(Star):
     async def remove_sub(self, event: AstrMessageEvent, url: str):
         """取消订阅 RSS 源"""
         uid = str(event.get_sender_id())
-        data = await self.get_kv_data("subscriptions") or {}
+        data = await self.get_kv_data("subscriptions", {})
         user_subs = data.get("user_subs", {})
 
         if uid not in user_subs:
@@ -213,7 +213,7 @@ class RssSubscriber(Star):
     async def list_subs(self, event: AstrMessageEvent):
         """列出当前订阅的 RSS 源"""
         uid = str(event.get_sender_id())
-        data = await self.get_kv_data("subscriptions") or {}
+        data = await self.get_kv_data("subscriptions", {})
         user_subs = data.get("user_subs", {})
 
         if uid not in user_subs or not user_subs[uid]["subscriptions"]:
@@ -230,7 +230,7 @@ class RssSubscriber(Star):
     async def manual_check(self, event: AstrMessageEvent):
         """手动触发一次更新检查"""
         uid = str(event.get_sender_id())
-        data = await self.get_kv_data("subscriptions") or {}
+       data = await self.get_kv_data("subscriptions", {})
         user_subs = data.get("user_subs", {})
 
         if uid not in user_subs or not user_subs[uid]["subscriptions"]:
