@@ -4,7 +4,6 @@ import os
 
 persistent_packages = "/AstrBot/data/python_packages"
 if os.path.exists(persistent_packages) and persistent_packages not in sys.path:
-    @filter
     sys.path.insert(0, persistent_packages)
     
 import feedparser
