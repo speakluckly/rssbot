@@ -11,7 +11,8 @@ import aiohttp
 from datetime import datetime
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
-from astrbot.api.message_components import Plain, Image, At, MessageChain  # 导入 MessageChain
+from astrbot.api.message_components import Plain, Image, At
+from astrbot.api.event import MessageChain  # 正确导入
 from astrbot.api import logger
 
 @register("rss_subscriber", "你的名字", "一个简单的 RSS 订阅推送插件", "1.0.0")
