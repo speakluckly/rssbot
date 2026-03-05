@@ -30,10 +30,18 @@ from astrbot.api import logger
 @register("rss_subscriber", "你的名字", "一个简单的 RSS 订阅推送插件", "1.0.0")
 class RssSubscriber(Star):
     def __init__(self, context: Context):
-        super().__init__(context)
-        self.config = context.get_config()
-        self.check_interval = 300  # 检查间隔，单位秒
-        self._task = None
+    super().__init__(context)
+    self.config = context.get_config()
+    self.check_interval = 300  # 检查间隔，单位秒
+    self._task = None
+    # 启动后台任务（延迟2秒，让插件先完全加载）
+    import asyncio
+    asyncio.create_task(self._delayed_start())
+    
+    async def _delayed_start(self):
+    await asyncio.sleep(2)  # 等待2秒
+    logger.info("RSS 订阅插件后台任务已启动，检查间隔 {} 秒".format(self.check_interval))
+    self._task = asyncio.create_task(self._check_updates())
 
     async def _fetch_rss(self, url: str):
         """异步获取并解析 RSS feed，返回条目列表"""
