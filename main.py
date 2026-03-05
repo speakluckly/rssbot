@@ -5,27 +5,14 @@ import os
 persistent_packages = "/AstrBot/data/python_packages"
 if os.path.exists(persistent_packages) and persistent_packages not in sys.path:
     sys.path.insert(0, persistent_packages)
-    
+
 import feedparser
 import aiohttp
-from datetime import datetime, timezone
+from datetime import datetime
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
-from astrbot.api.message_components import Plain, Image, At
+from astrbot.api.message_components import Plain, Image, At, MessageChain  # 导入 MessageChain
 from astrbot.api import logger
-
-# 订阅数据存储结构：
-# {
-#   "user_subs": {
-#     "qq_number": {
-#         "origin": "unified_msg_origin",
-#         "subscriptions": [
-#             {"url": "http://...", "last_guid": "xxx", "last_title": "yyy"},
-#             ...
-#         ]
-#     }
-#   }
-# }
 
 @register("rss_subscriber", "你的名字", "一个简单的 RSS 订阅推送插件", "1.0.0")
 class RssSubscriber(Star):
@@ -34,14 +21,12 @@ class RssSubscriber(Star):
         self.config = context.get_config()
         self.check_interval = 300
         self._task = None
-        # 启动后台任务（延迟2秒）
         asyncio.create_task(self._delayed_start())
 
     async def _delayed_start(self):
         await asyncio.sleep(2)
         logger.info("RSS 订阅插件后台任务已启动，检查间隔 {} 秒".format(self.check_interval))
         self._task = asyncio.create_task(self._check_updates())
-        # 发送启动测试通知
         await self._send_test_notifications()
 
     async def _send_test_notifications(self):
@@ -58,18 +43,17 @@ class RssSubscriber(Star):
                 origin = info.get("origin")
                 if origin:
                     try:
-                        await self.context.send_message(origin, [Plain(test_msg)])
+                        # 使用 MessageChain 包装消息
+                        await self.context.send_message(origin, MessageChain([Plain(test_msg)]))
                         logger.info(f"已向用户 {uid} 发送启动测试消息")
                     except Exception as e:
                         logger.error(f"向用户 {uid} 发送测试消息失败: {e}")
         except Exception as e:
             logger.error(f"发送启动测试通知时出错: {e}")
 
-    # 以下是你原有的其他方法（_fetch_rss, _get_latest_entry, _check_updates, 指令等）保持不变，但必须确保它们都在类内部且缩进正确。
     async def _fetch_rss(self, url: str):
         """异步获取并解析 RSS feed，返回条目列表"""
         try:
-            # ... 原有代码
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, timeout=10) as resp:
                     if resp.status != 200:
@@ -136,7 +120,8 @@ class RssSubscriber(Star):
                         if last_guid != new_guid:
                             try:
                                 msg = f"📢 RSS 更新：{new_title}\n{new_link}\n{new_published}"
-                                await self.context.send_message(origin, [Plain(msg)])
+                                # 使用 MessageChain 包装消息
+                                await self.context.send_message(origin, MessageChain([Plain(msg)]))
                                 logger.info(f"已推送更新给用户 {uid} 来自 {url}")
                                 sub_info["last_guid"] = new_guid
                                 sub_info["last_title"] = new_title
@@ -153,6 +138,7 @@ class RssSubscriber(Star):
 
     async def _start_background_task(self):
         self._task = asyncio.create_task(self._check_updates())
+
     async def terminate(self):
         if self._task:
             self._task.cancel()
@@ -183,7 +169,6 @@ class RssSubscriber(Star):
         data = await self.get_kv_data("subscriptions", {})
         user_subs = data.setdefault("user_subs", {})
 
-        # 使用 QQ 号作为用户标识
         uid = str(event.get_sender_id())
         origin = event.unified_msg_origin
 
@@ -193,7 +178,6 @@ class RssSubscriber(Star):
                 "subscriptions": []
             }
         else:
-            # 更新 origin（以防变化）
             user_subs[uid]["origin"] = origin
 
         for sub in user_subs[uid]["subscriptions"]:
