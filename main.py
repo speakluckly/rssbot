@@ -3,7 +3,7 @@ import sys
 import os
 
 persistent_packages = "/AstrBot/data/python_packages"
-if os.path.exists(persistent_packages) and persistent_packages not in sys.path:
+if os.path.exists(persistent_packages) and persistent_packages not in sys.path:@filter
     sys.path.insert(0, persistent_packages)
 import feedparser
 import aiohttp
@@ -140,7 +140,7 @@ class RssSubscriber(Star):
         pass
 
     @rss.command("add")
-    @filter.private_message()
+    @filter.event_message_type(filter.EventMessageType.PRIVATE_MESSAGE)
     async def add_sub(self, event: AstrMessageEvent, url: str):
         """添加 RSS 订阅源"""
         entries = await self._fetch_rss(url)
